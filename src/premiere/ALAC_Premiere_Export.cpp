@@ -662,6 +662,12 @@ exSDKExport(
 														audioChannels, samples_to_get, pos_this_frame,
 														sampleSizeP.value.intValue);
 							}
+							else
+							{
+								CopySamples<int32_t>((int32_t *)alac_buffer, pr_buffers,
+														audioChannels, samples_to_get, pos_this_frame,
+														sampleSizeP.value.intValue);
+							}
 						}
 						
 						samples_left_this_frame -= samples_to_get;

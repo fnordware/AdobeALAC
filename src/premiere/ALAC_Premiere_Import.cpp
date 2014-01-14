@@ -639,6 +639,14 @@ SDKGetInfo8(
 					SDKFileInfo8->audInfo.numChannels	= audio_desc->GetChannelCount();
 					SDKFileInfo8->audInfo.sampleRate	= audio_desc->GetSampleRate();
 					
+					if(SDKFileInfo8->audInfo.sampleRate != localRecP->alac->mConfig.sampleRate)
+					{
+						// This appears to be a disturbing Bento4 bug
+						SDKFileInfo8->audInfo.sampleRate = localRecP->alac->mConfig.sampleRate;
+						assert(false); // not OK
+					}
+					
+					
 					const AP4_UI16 bitDepth				= audio_desc->GetSampleSize();
 					
 					SDKFileInfo8->audInfo.sampleType	= bitDepth == 8 ? kPrAudioSampleType_8BitInt :
@@ -649,18 +657,10 @@ SDKGetInfo8(
 															kPrAudioSampleType_Compressed;
 															
 					SDKFileInfo8->audDuration			= localRecP->audio_track->GetDuration() *
-															audio_desc->GetSampleRate() /
+															SDKFileInfo8->audInfo.sampleRate /
 															localRecP->audio_track->GetMediaTimeScale();
 					
 					
-					
-					if(SDKFileInfo8->audInfo.sampleRate != localRecP->alac->mConfig.sampleRate)
-					{
-						// This appears to be a disturbing Bento4 bug
-						assert(false);
-					
-						SDKFileInfo8->audInfo.sampleRate = localRecP->alac->mConfig.sampleRate;
-					}
 					
 					assert(SDKFileInfo8->audInfo.numChannels == localRecP->alac->mConfig.numChannels);
 					assert(bitDepth == localRecP->alac->mConfig.bitDepth);
@@ -744,8 +744,10 @@ SDKImportAudio7(
 		const AP4_UI32 timestamp_ms = audioRec7->position * 1000 / localRecP->audioSampleRate;
 		
 		
+		const size_t bytes_per_sample = (localRecP->alac->mConfig.bitDepth <= 16 ? 2 : 4);
+		
 		const size_t alac_buf_size = localRecP->alac->mConfig.frameLength * localRecP->alac->mConfig.numChannels *
-										(localRecP->alac->mConfig.bitDepth >> 3) + kALACMaxEscapeHeaderBytes;
+										bytes_per_sample + kALACMaxEscapeHeaderBytes;
 		
 		uint8_t *alac_buffer = (uint8_t *)malloc(alac_buf_size);
 		
@@ -799,9 +801,15 @@ SDKImportAudio7(
 						
 						if(alac_result == 0)
 						{
-							if(localRecP->alac->mConfig.bitDepth == 16)
+							if(localRecP->alac->mConfig.bitDepth <= 16)
 							{
 								CopySamples<int16_t>((const int16_t *)alac_buffer, audioRec7->buffer,
+														localRecP->numChannels, outSamples, pos, skip_samples,
+														localRecP->alac->mConfig.bitDepth);
+							}
+							else
+							{
+								CopySamples<int32_t>((const int32_t *)alac_buffer, audioRec7->buffer,
 														localRecP->numChannels, outSamples, pos, skip_samples,
 														localRecP->alac->mConfig.bitDepth);
 							}
