@@ -1,0 +1,3 @@
+[submodule "ext/alac"]
+	path = ext/alac
+	url = git://git.macosforge.org/alac.git
