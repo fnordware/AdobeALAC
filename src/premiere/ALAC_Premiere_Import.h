@@ -30,7 +30,7 @@
 
 // ------------------------------------------------------------------------
 //
-// Ogg Vorbis (and FLAC) plug-in for Premiere
+// ALAC (Apple Lossless) plug-in for Premiere
 //
 // by Brendan Bolles <brendan@fnordware.com>
 //
