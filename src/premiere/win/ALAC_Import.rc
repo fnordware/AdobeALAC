@@ -1,0 +1,11 @@
+// This is our FCC filetype
+#define ALAC 0x414C4143		// Hex description 'ALAC'
+
+// For compatibility with Premiere 6.x, we still define a real IMPT resource
+1000 IMPT DISCARDABLE
+BEGIN
+	0x0000
+	ALAC 
+END
+
+	

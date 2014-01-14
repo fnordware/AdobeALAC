@@ -1,0 +1,286 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2A2B176D188479D4001EA7C5 /* ag_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B173D188479D4001EA7C5 /* ag_dec.c */; };
+		2A2B176E188479D4001EA7C5 /* ag_enc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B173E188479D4001EA7C5 /* ag_enc.c */; };
+		2A2B176F188479D4001EA7C5 /* aglib.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B173F188479D4001EA7C5 /* aglib.h */; };
+		2A2B1770188479D4001EA7C5 /* ALACAudioTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B1740188479D4001EA7C5 /* ALACAudioTypes.h */; };
+		2A2B1771188479D4001EA7C5 /* ALACBitUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B1741188479D4001EA7C5 /* ALACBitUtilities.c */; };
+		2A2B1772188479D4001EA7C5 /* ALACBitUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B1742188479D4001EA7C5 /* ALACBitUtilities.h */; };
+		2A2B1773188479D4001EA7C5 /* ALACDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B1743188479D4001EA7C5 /* ALACDecoder.cpp */; };
+		2A2B1774188479D4001EA7C5 /* ALACDecoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B1744188479D4001EA7C5 /* ALACDecoder.h */; };
+		2A2B1775188479D4001EA7C5 /* ALACEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B1745188479D4001EA7C5 /* ALACEncoder.cpp */; };
+		2A2B1776188479D4001EA7C5 /* ALACEncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B1746188479D4001EA7C5 /* ALACEncoder.h */; };
+		2A2B1777188479D4001EA7C5 /* dp_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B1748188479D4001EA7C5 /* dp_dec.c */; };
+		2A2B1778188479D4001EA7C5 /* dp_enc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B1749188479D4001EA7C5 /* dp_enc.c */; };
+		2A2B1779188479D4001EA7C5 /* dplib.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B174A188479D4001EA7C5 /* dplib.h */; };
+		2A2B177A188479D4001EA7C5 /* EndianPortable.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B174B188479D4001EA7C5 /* EndianPortable.c */; };
+		2A2B177B188479D4001EA7C5 /* EndianPortable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B174C188479D4001EA7C5 /* EndianPortable.h */; };
+		2A2B177D188479D4001EA7C5 /* matrix_dec.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B174E188479D4001EA7C5 /* matrix_dec.c */; };
+		2A2B177E188479D4001EA7C5 /* matrix_enc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B174F188479D4001EA7C5 /* matrix_enc.c */; };
+		2A2B177F188479D4001EA7C5 /* matrixlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A2B1750188479D4001EA7C5 /* matrixlib.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2A2B16F718847979001EA7C5 /* libalac.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libalac.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A2B173D188479D4001EA7C5 /* ag_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ag_dec.c; sourceTree = "<group>"; };
+		2A2B173E188479D4001EA7C5 /* ag_enc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ag_enc.c; sourceTree = "<group>"; };
+		2A2B173F188479D4001EA7C5 /* aglib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aglib.h; sourceTree = "<group>"; };
+		2A2B1740188479D4001EA7C5 /* ALACAudioTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALACAudioTypes.h; sourceTree = "<group>"; };
+		2A2B1741188479D4001EA7C5 /* ALACBitUtilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ALACBitUtilities.c; sourceTree = "<group>"; };
+		2A2B1742188479D4001EA7C5 /* ALACBitUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALACBitUtilities.h; sourceTree = "<group>"; };
+		2A2B1743188479D4001EA7C5 /* ALACDecoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ALACDecoder.cpp; sourceTree = "<group>"; };
+		2A2B1744188479D4001EA7C5 /* ALACDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALACDecoder.h; sourceTree = "<group>"; };
+		2A2B1745188479D4001EA7C5 /* ALACEncoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ALACEncoder.cpp; sourceTree = "<group>"; };
+		2A2B1746188479D4001EA7C5 /* ALACEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALACEncoder.h; sourceTree = "<group>"; };
+		2A2B1748188479D4001EA7C5 /* dp_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dp_dec.c; sourceTree = "<group>"; };
+		2A2B1749188479D4001EA7C5 /* dp_enc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dp_enc.c; sourceTree = "<group>"; };
+		2A2B174A188479D4001EA7C5 /* dplib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dplib.h; sourceTree = "<group>"; };
+		2A2B174B188479D4001EA7C5 /* EndianPortable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = EndianPortable.c; sourceTree = "<group>"; };
+		2A2B174C188479D4001EA7C5 /* EndianPortable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EndianPortable.h; sourceTree = "<group>"; };
+		2A2B174E188479D4001EA7C5 /* matrix_dec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = matrix_dec.c; sourceTree = "<group>"; };
+		2A2B174F188479D4001EA7C5 /* matrix_enc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = matrix_enc.c; sourceTree = "<group>"; };
+		2A2B1750188479D4001EA7C5 /* matrixlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = matrixlib.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2A2B16F518847978001EA7C5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		034768DDFF38A45A11DB9C8B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B16F718847979001EA7C5 /* libalac.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0867D691FE84028FC02AAC07 /* alac */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B1713188479D4001EA7C5 /* alac */,
+				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
+				034768DDFF38A45A11DB9C8B /* Products */,
+			);
+			name = alac;
+			sourceTree = "<group>";
+		};
+		0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		2A2B1713188479D4001EA7C5 /* alac */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B173C188479D4001EA7C5 /* codec */,
+			);
+			name = alac;
+			path = ../../../ext/alac;
+			sourceTree = SOURCE_ROOT;
+		};
+		2A2B173C188479D4001EA7C5 /* codec */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B173D188479D4001EA7C5 /* ag_dec.c */,
+				2A2B173E188479D4001EA7C5 /* ag_enc.c */,
+				2A2B173F188479D4001EA7C5 /* aglib.h */,
+				2A2B1740188479D4001EA7C5 /* ALACAudioTypes.h */,
+				2A2B1741188479D4001EA7C5 /* ALACBitUtilities.c */,
+				2A2B1742188479D4001EA7C5 /* ALACBitUtilities.h */,
+				2A2B1743188479D4001EA7C5 /* ALACDecoder.cpp */,
+				2A2B1744188479D4001EA7C5 /* ALACDecoder.h */,
+				2A2B1745188479D4001EA7C5 /* ALACEncoder.cpp */,
+				2A2B1746188479D4001EA7C5 /* ALACEncoder.h */,
+				2A2B1748188479D4001EA7C5 /* dp_dec.c */,
+				2A2B1749188479D4001EA7C5 /* dp_enc.c */,
+				2A2B174A188479D4001EA7C5 /* dplib.h */,
+				2A2B174B188479D4001EA7C5 /* EndianPortable.c */,
+				2A2B174C188479D4001EA7C5 /* EndianPortable.h */,
+				2A2B174E188479D4001EA7C5 /* matrix_dec.c */,
+				2A2B174F188479D4001EA7C5 /* matrix_enc.c */,
+				2A2B1750188479D4001EA7C5 /* matrixlib.h */,
+			);
+			path = codec;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		2A2B16F318847978001EA7C5 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A2B176F188479D4001EA7C5 /* aglib.h in Headers */,
+				2A2B1770188479D4001EA7C5 /* ALACAudioTypes.h in Headers */,
+				2A2B1772188479D4001EA7C5 /* ALACBitUtilities.h in Headers */,
+				2A2B1774188479D4001EA7C5 /* ALACDecoder.h in Headers */,
+				2A2B1776188479D4001EA7C5 /* ALACEncoder.h in Headers */,
+				2A2B1779188479D4001EA7C5 /* dplib.h in Headers */,
+				2A2B177B188479D4001EA7C5 /* EndianPortable.h in Headers */,
+				2A2B177F188479D4001EA7C5 /* matrixlib.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		2A2B16F618847978001EA7C5 /* alac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A2B16FF18847994001EA7C5 /* Build configuration list for PBXNativeTarget "alac" */;
+			buildPhases = (
+				2A2B16F318847978001EA7C5 /* Headers */,
+				2A2B16F418847978001EA7C5 /* Sources */,
+				2A2B16F518847978001EA7C5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = alac;
+			productName = alac;
+			productReference = 2A2B16F718847979001EA7C5 /* libalac.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0867D690FE84028FC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB916408733D950010E9CD /* Build configuration list for PBXProject "alac" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 0867D691FE84028FC02AAC07 /* alac */;
+			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2A2B16F618847978001EA7C5 /* alac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2A2B16F418847978001EA7C5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A2B176D188479D4001EA7C5 /* ag_dec.c in Sources */,
+				2A2B176E188479D4001EA7C5 /* ag_enc.c in Sources */,
+				2A2B1771188479D4001EA7C5 /* ALACBitUtilities.c in Sources */,
+				2A2B1773188479D4001EA7C5 /* ALACDecoder.cpp in Sources */,
+				2A2B1775188479D4001EA7C5 /* ALACEncoder.cpp in Sources */,
+				2A2B1777188479D4001EA7C5 /* dp_dec.c in Sources */,
+				2A2B1778188479D4001EA7C5 /* dp_enc.c in Sources */,
+				2A2B177A188479D4001EA7C5 /* EndianPortable.c in Sources */,
+				2A2B177D188479D4001EA7C5 /* matrix_dec.c in Sources */,
+				2A2B177E188479D4001EA7C5 /* matrix_enc.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB916508733D950010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Debug;
+		};
+		1DEB916608733D950010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Release;
+		};
+		2A2B16F818847979001EA7C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = alac;
+			};
+			name = Debug;
+		};
+		2A2B16F918847979001EA7C5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = alac;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB916408733D950010E9CD /* Build configuration list for PBXProject "alac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB916508733D950010E9CD /* Debug */,
+				1DEB916608733D950010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2A2B16FF18847994001EA7C5 /* Build configuration list for PBXNativeTarget "alac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A2B16F818847979001EA7C5 /* Debug */,
+				2A2B16F918847979001EA7C5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0867D690FE84028FC02AAC07 /* Project object */;
+}
