@@ -761,6 +761,9 @@ exSDKExport(
 				
 				free(alac_buffer);
 				free(alac_compressed_buffer);
+				
+				
+				audioSuite->ReleaseAudioRenderer(exID, audioRenderID);
 			}
 		}
 	}
