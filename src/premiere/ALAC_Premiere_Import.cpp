@@ -246,7 +246,14 @@ SDKInit(
 	
 	importInfo->dontCache			= kPrFalse;		// Don't let Premiere cache these files
 	importInfo->keepLoaded			= kPrFalse;		// If you MUST stay loaded use, otherwise don't: play nice
+
+#ifdef NDEBUG
+	// QuickTime can handle these files, so we'll let it.  Premiere can fall back to us if it needs to.
+	importInfo->priority			= 0;
+#else
+	// When we're developing, however, we don't mind getting a little pushy.
 	importInfo->priority			= 100;
+#endif
 	
 	importInfo->avoidAudioConform	= kPrTrue;		// If I let Premiere conform the audio, I get silence when
 													// I try to play it in the program.  Seems like a bug to me.
@@ -722,7 +729,8 @@ static void CopySamples(const void *in, float **out, int channels, int samples, 
 	const double divisor = (1L << (32 - 1));
 	
 	// Apparently with ALAC, 20-bit audio is packed into 3 bytes (24-bits)
-	// So we take and give the full 24-bits, assuming it's truncating internally
+	// So we take and give the full 24-bits, assuming it's truncating internally.
+	// If I had known this, I probably wouldn't have bothered with the BitBufferRead business.
 	if(bitDepth == 20)
 		bitDepth = 24;
 	
