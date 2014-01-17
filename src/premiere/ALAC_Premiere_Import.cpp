@@ -215,7 +215,9 @@ typedef struct
 	csSDK_int32				importerID;
 	csSDK_int32				fileType;
 	int						numChannels;
-	float					audioSampleRate;
+	int						audioSampleRate;
+	int						bitDepth;
+	PrAudioSample			duration;
 	
 	My_ByteStream			*reader;
 	AP4_File				*file;
@@ -583,7 +585,9 @@ SDKAnalysis(
 	std::stringstream ss;
 	
 	// actually, this is already reported, what do I have to add?
-	ss << localRecP->numChannels << " channels, " << localRecP->audioSampleRate << " Hz";
+	ss << localRecP->numChannels << " channels, " <<
+		localRecP->audioSampleRate << " Hz, " <<
+		localRecP->bitDepth << "-bit";
 	
 	if(SDKAnalysisRec->buffersize > ss.str().size())
 		strcpy(SDKAnalysisRec->buffer, ss.str().c_str());
@@ -641,9 +645,15 @@ SDKGetInfo8(
 					
 					if(SDKFileInfo8->audInfo.sampleRate != localRecP->alac->mConfig.sampleRate)
 					{
-						// This appears to be a disturbing Bento4 bug
+						// This appears to be a disturbing Bento4 bug.
+						// Or maybe not?  The ALACs on this page had the same issue:
+						// http://www.linnrecords.com/linn-downloads-testfiles.aspx
+						//
+						// The problem arises when the sample rate is larger than uint16_t,
+						// although the field should be a uint32_t
+						
 						SDKFileInfo8->audInfo.sampleRate = localRecP->alac->mConfig.sampleRate;
-						assert(false); // not OK
+						//assert(false); // not OK?
 					}
 					
 					
@@ -660,6 +670,8 @@ SDKGetInfo8(
 															SDKFileInfo8->audInfo.sampleRate /
 															localRecP->audio_track->GetMediaTimeScale();
 					
+					
+					localRecP->bitDepth = bitDepth;
 					
 					
 					assert(SDKFileInfo8->audInfo.numChannels == localRecP->alac->mConfig.numChannels);
@@ -680,6 +692,7 @@ SDKGetInfo8(
 
 		localRecP->audioSampleRate			= SDKFileInfo8->audInfo.sampleRate;
 		localRecP->numChannels				= SDKFileInfo8->audInfo.numChannels;
+		localRecP->duration					= SDKFileInfo8->audDuration;
 		
 		
 		if(SDKFileInfo8->audInfo.numChannels > 2 && SDKFileInfo8->audInfo.numChannels != 6)
@@ -695,8 +708,7 @@ SDKGetInfo8(
 }
 
 
-template<typename INPUT>
-static void CopySamples(const INPUT *in, float **out, int channels, int samples, PrAudioSample pos, int skip, int bitDepth)
+static void CopySamples(const void *in, float **out, int channels, int samples, PrAudioSample pos, int skip, int bitDepth)
 {
 	// for surround channels
 	// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
@@ -707,13 +719,43 @@ static void CopySamples(const INPUT *in, float **out, int channels, int samples,
 
 	const int *swizzle = channels > 2 ? surround_swizzle : stereo_swizzle;
 
-	const double divisor = (1L << (bitDepth - 1));
+	const double divisor = (1L << (32 - 1));
+	
+	// Apparently with ALAC, 20-bit audio is packed into 3 bytes (24-bits)
+	// So we take and give the full 24-bits, assuming it's truncating internally
+	if(bitDepth == 20)
+		bitDepth = 24;
+	
+	
+	BitBuffer reader;
+	BitBufferInit(&reader, (uint8_t *)in, (bitDepth * channels * samples) >> 3);
 
-	for(int c=0; c < channels; c++)
+	for(int i = (-skip); i < samples; i++)
 	{
-		for(int i=0; i < samples; i++)
+		for(int c=0; c < channels; c++)
 		{
-			out[swizzle[c]][i + pos] = (double)in[(channels * (i + skip)) + c] / divisor;
+			uint32_t val = 0;
+			
+			// This is making some assumptions about endianness, beware!
+			if(bitDepth > 24)
+				val |= BitBufferRead(&reader, MIN(bitDepth - 24, 8)) << (8 - MIN(bitDepth - 24, 8));
+				
+			if(bitDepth > 16)
+				val |= BitBufferRead(&reader, MIN(bitDepth - 16, 8)) << (16 - MIN(bitDepth - 16, 8));
+				
+			assert(bitDepth >= 16);
+			
+			val |= BitBufferRead(&reader, 8) << 16;
+			
+			val |= BitBufferRead(&reader, 8) << 24;
+			
+			int32_t *sval = (int32_t *)&val;
+			
+			if(bitDepth < 32 && *sval > 0)
+				*sval |= *sval >> (32 - bitDepth);
+			
+			if(i >= 0)
+				out[swizzle[c]][i + pos] = (double)*sval / divisor;
 		}
 	}
 }
@@ -739,6 +781,21 @@ SDKImportAudio7(
 		assert(localRecP->file != NULL && localRecP->file->GetMovie() != NULL);
 		
 		assert(audioRec7->position >= 0); // Do they really want contiguous samples?
+		
+		assert(audioRec7->position < localRecP->duration);
+		
+		if(audioRec7->size > localRecP->duration - audioRec7->position)
+		{
+			// this does happen, we get asked for audio data past the duration
+			// let's make sure there's no garbage there and re-set audioRec7->size
+			
+			for(int c=0; c < localRecP->numChannels; c++)
+			{
+				memset(audioRec7->buffer[c], 0, sizeof(float) * audioRec7->size);
+			}
+			
+			audioRec7->size = localRecP->duration - audioRec7->position;
+		}
 		
 		
 		const AP4_UI32 timestamp_ms = audioRec7->position * 1000 / localRecP->audioSampleRate;
@@ -774,7 +831,7 @@ SDKImportAudio7(
 					const PrAudioSample sample_pos = sample.GetDts() *
 														localRecP->audioSampleRate /
 														localRecP->audio_track->GetMediaTimeScale();
-														
+					
 					const PrAudioSample sample_len = sample.GetDuration() *
 														localRecP->audioSampleRate /
 														localRecP->audio_track->GetMediaTimeScale();
@@ -796,32 +853,32 @@ SDKImportAudio7(
 						uint32_t outSamples = 0;
 					
 						int32_t alac_result = localRecP->alac->Decode(&bits,
-																		alac_buffer, samples_to_read, localRecP->numChannels,
+																		alac_buffer, localRecP->alac->mConfig.frameLength, localRecP->numChannels,
 																		&outSamples);
 						
 						if(alac_result == 0)
 						{
-							if(localRecP->alac->mConfig.bitDepth <= 16)
+							bool eos = false;
+						
+							if(samples_to_read > outSamples)
 							{
-								CopySamples<int16_t>((const int16_t *)alac_buffer, audioRec7->buffer,
-														localRecP->numChannels, outSamples, pos, skip_samples,
-														localRecP->alac->mConfig.bitDepth);
+								samples_to_read = outSamples;
+								
+								eos = true;
 							}
-							else
-							{
-								CopySamples<int32_t>((const int32_t *)alac_buffer, audioRec7->buffer,
-														localRecP->numChannels, outSamples, pos, skip_samples,
-														localRecP->alac->mConfig.bitDepth);
-							}
+						
+							CopySamples(alac_buffer, audioRec7->buffer,
+													localRecP->numChannels, samples_to_read, pos, skip_samples,
+													localRecP->alac->mConfig.bitDepth);
 							
-							if(outSamples < samples_to_read)
+							if(eos)
 							{
 								// end of the stream
 								break;
 							}
 						}
 						else
-							result = imDecompressionError;
+							assert(false);
 					}
 					
 					
@@ -830,7 +887,12 @@ SDKImportAudio7(
 					
 					sample_index++;
 				}
+				else
+					assert(false);
 			}
+			
+			
+			assert(ap4_result == AP4_SUCCESS);
 			
 			
 			if(ap4_result != AP4_SUCCESS && ap4_result != AP4_ERROR_EOS && ap4_result != AP4_ERROR_OUT_OF_RANGE)

@@ -431,7 +431,7 @@ MyOther_ByteStream::Release()
 
 
 
-static inline int
+static inline int32_t
 AudioClip(double in, unsigned int max_val)
 {
 	// My understanding with audio is that it uses the full signed range.
@@ -448,26 +448,44 @@ AudioClip(double in, unsigned int max_val)
 
 
 
-template<typename OUTPUT>
-static void CopySamples(OUTPUT *out, float **in, int channels, int samples, PrAudioSample pos, int bitDepth)
+static void CopySamples(BitBuffer *writer, float * const *in, int channels, int samples, PrAudioSample pos, int bitDepth)
 {
 	// copy Premiere audio to ALAC buffer, swizzling channels
 	// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
 	// ALAC uses Center, Left, Right, Left Rear, Right Rear, LFE
-	// http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-800004.3.9
+	// http://alac.macosforge.org/trac/browser/trunk/ReadMe.txt
 	static const int stereo_swizzle[] = {0, 1, 0, 1, 0, 1};
 	static const int surround_swizzle[] = {4, 0, 1, 2, 3, 5};
 	
 	const int *swizzle = (channels > 2 ? surround_swizzle : stereo_swizzle);
 	
-	const double multiplier = (1L << (bitDepth - 1));
+	const double multiplier = (1L << (32 - 1));
 	
-	for(int c=0; c < channels; c++)
+	// Apparently with ALAC, 20-bit audio is packed into 3 bytes (24-bits)
+	// So we take and give the full 24-bits, assuming it's truncating internally
+	if(bitDepth == 20)
+		bitDepth = 24;
+	
+	for(int i=0; i < samples; i++)
 	{
-		for(int i=0; i < samples; i++)
+		for(int c=0; c < channels; c++)
 		{
-			out[((i + pos) * channels) + swizzle[c]] =
-									AudioClip((double)in[c][i] * multiplier, multiplier);
+			int32_t sval = AudioClip((double)in[swizzle[c]][i] * multiplier, multiplier);
+			
+			uint32_t *val = (uint32_t *)&sval;
+			
+			// This is making some assumptions about endianness, beware!
+			if(bitDepth > 24)
+				BitBufferWrite(writer, (*val >> (8 - MIN(bitDepth - 24, 8))) & 0xff, MIN(bitDepth - 24, 8));
+
+			if(bitDepth > 16)
+				BitBufferWrite(writer, (*val >> (16 - MIN(bitDepth - 16, 8))) & 0xff, MIN(bitDepth - 16, 8));
+
+			assert(bitDepth >= 16);
+			
+			BitBufferWrite(writer, (*val >> 16) & 0xff, 8);
+			
+			BitBufferWrite(writer, (*val >> 24) & 0xff, 8);
 		}
 	}
 }
@@ -534,18 +552,24 @@ exSDKExport(
 		alac.SetFrameSize(frameSize);
 		
 
-		const size_t bytes_per_sample = (sampleSizeP.value.intValue <= 16 ? 2 : 4);
+		const size_t bytes_per_sample = (sampleSizeP.value.intValue == 16 ? 2 :
+											sampleSizeP.value.intValue == 20 ? 3 :
+											sampleSizeP.value.intValue == 24 ? 3 :
+											sampleSizeP.value.intValue == 34 ? 4 :
+											4);
 
 		const size_t alac_buf_size = frameSize * audioChannels * bytes_per_sample;
+						
 												
+		// Only the //* fields are actually used
 		AudioFormatDescription inputDesc;
 		inputDesc.mSampleRate = sampleRateP.value.floatValue;
 		inputDesc.mFormatID = kALACFormatLinearPCM;
 		inputDesc.mFormatFlags = kALACFormatFlagIsSignedInteger;
-		inputDesc.mBytesPerPacket = bytes_per_sample * audioChannels;
+		inputDesc.mBytesPerPacket = bytes_per_sample * audioChannels; // *
 		inputDesc.mFramesPerPacket = 1;
 		inputDesc.mBytesPerFrame = bytes_per_sample;
-		inputDesc.mChannelsPerFrame = audioChannels;
+		inputDesc.mChannelsPerFrame = audioChannels; // *
 		inputDesc.mBitsPerChannel = sampleSizeP.value.intValue;
 		inputDesc.mReserved = 0;
 		
@@ -557,13 +581,13 @@ exSDKExport(
 									kTestFormatFlag_16BitSourceData;
 		
 		AudioFormatDescription outputDesc;
-		outputDesc.mSampleRate = sampleRateP.value.floatValue;
+		outputDesc.mSampleRate = sampleRateP.value.floatValue; // *
 		outputDesc.mFormatID = kALACFormatAppleLossless;
-		outputDesc.mFormatFlags = output_format;
+		outputDesc.mFormatFlags = output_format; // *
 		outputDesc.mBytesPerPacket = bytes_per_sample * audioChannels;
 		outputDesc.mFramesPerPacket = 1;
 		outputDesc.mBytesPerFrame = bytes_per_sample;
-		outputDesc.mChannelsPerFrame = audioChannels;
+		outputDesc.mChannelsPerFrame = audioChannels; // *
 		outputDesc.mBitsPerChannel = sampleSizeP.value.intValue;
 		outputDesc.mReserved = 0;
 		
@@ -589,11 +613,9 @@ exSDKExport(
 				alac.GetMagicCookie(magic_cookie.UseData(), &cookie_size);
 				
 				
-				ALAC_Atom *alac_atom = new ALAC_Atom(magic_cookie.UseData(), cookie_size);
-				
 				AP4_AtomParent *details = new AP4_AtomParent;
 				
-				details->AddChild(alac_atom);
+				details->AddChild(new ALAC_Atom(magic_cookie.UseData(), cookie_size) );
 				
 				AP4_GenericAudioSampleDescription *sample_description = new AP4_GenericAudioSampleDescription(
 																				AP4_ATOM_TYPE_ALAC,
@@ -636,6 +658,9 @@ exSDKExport(
 				
 				while(samples_left > 0 && result == malNoError)
 				{
+					BitBuffer bit_writer;
+					BitBufferInit(&bit_writer, (uint8_t *)alac_buffer, alac_buf_size);
+					
 					int samples_this_frame = frameSize;
 					
 					if(samples_this_frame > samples_left)
@@ -656,18 +681,9 @@ exSDKExport(
 						
 						if(result == malNoError)
 						{
-							if(sampleSizeP.value.intValue == 16)
-							{
-								CopySamples<int16_t>((int16_t *)alac_buffer, pr_buffers,
-														audioChannels, samples_to_get, pos_this_frame,
-														sampleSizeP.value.intValue);
-							}
-							else
-							{
-								CopySamples<int32_t>((int32_t *)alac_buffer, pr_buffers,
-														audioChannels, samples_to_get, pos_this_frame,
-														sampleSizeP.value.intValue);
-							}
+							CopySamples(&bit_writer, pr_buffers,
+											audioChannels, samples_to_get, pos_this_frame,
+											sampleSizeP.value.intValue);
 						}
 						
 						samples_left_this_frame -= samples_to_get;
@@ -708,19 +724,17 @@ exSDKExport(
 				}
 				
 				
-				AP4_Track *track = new AP4_Track(AP4_Track::TYPE_AUDIO,
-													sample_table,
-													0,
-													sampleRateP.value.floatValue,
-													total_samples,
-													sampleRateP.value.floatValue,
-													total_samples,
-													"eng",
-													0, 0);
-				
 				AP4_Movie *movie = new AP4_Movie;
 				
-				movie->AddTrack(track);
+				movie->AddTrack(new AP4_Track(AP4_Track::TYPE_AUDIO,
+												sample_table,
+												0,
+												sampleRateP.value.floatValue,
+												total_samples,
+												sampleRateP.value.floatValue,
+												total_samples,
+												"eng",
+												0, 0) );
 				
 				
 				AP4_File file(movie);
