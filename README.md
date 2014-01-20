@@ -8,8 +8,8 @@ Download
 --------
 Here are the latest binaries:
 
-**Apple Lossless for Premiere Pro** _v0.5b1, 16 January 2014_
-[Mac](http://www.fnordware.com/downloads/ALAC_v0.5b1_mac.zip) | [Win](http://www.fnordware.com/downloads/ALAC_v0.5b1_win.zip)
+**Apple Lossless for Premiere Pro** _v0.5b2, 20 January 2014_
+[Mac](http://www.fnordware.com/downloads/ALAC_v0.5b2_mac.zip) | [Win](http://www.fnordware.com/downloads/ALAC_v0.5b2_win.zip)
 
 
 License

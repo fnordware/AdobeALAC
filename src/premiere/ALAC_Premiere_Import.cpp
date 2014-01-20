@@ -715,55 +715,58 @@ SDKGetInfo8(
 }
 
 
-static void CopySamples(const void *in, float **out, int channels, int samples, PrAudioSample pos, int skip, int bitDepth)
+template<typename INPUT>
+static void
+CopySamples(const INPUT *in, float **out, int channels, const int swizzle[], int samples, PrAudioSample pos, int skip)
 {
-	// for surround channels
-	// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
-	// ALAC uses Center, Left, Right, Left Rear, Right Rear, LFE
-	// http://alac.macosforge.org/trac/browser/trunk/ReadMe.txt
-	static const int surround_swizzle[] = {1, 2, 3, 4, 0, 5};
-	static const int stereo_swizzle[] = {0, 1, 2, 3, 4, 5}; // no swizzle, actually
+	const double divisor = (1L << ((sizeof(INPUT) << 3) - 1));
 
-	const int *swizzle = channels > 2 ? surround_swizzle : stereo_swizzle;
+	for(int c=0; c < channels; c++)
+	{
+		for(int i=0; i < samples; i++)
+		{
+			out[swizzle[c]][pos + i] = (double)in[(channels * (skip + i)) + c] / divisor;
+		}
+	}
+}
 
+
+static void
+CopySamples24(const uint8_t *in, float **out, int channels, const int swizzle[], int samples, PrAudioSample pos, int skip, int bitDepth)
+{
+	// Apparently with ALAC, 20-bit and 24-bit audio is packed into 3 bytes.
+	// Put 20/24 bit sample into 32-bits and then convert to float.
+	const int bits_to_fill = 32 - bitDepth;
+	const int rightshift = 31 - bits_to_fill;
+	
 	const double divisor = (1L << (32 - 1));
 	
-	// Apparently with ALAC, 20-bit audio is packed into 3 bytes (24-bits)
-	// So we take and give the full 24-bits, assuming it's truncating internally.
-	// If I had known this, I probably wouldn't have bothered with the BitBufferRead business.
-	if(bitDepth == 20)
-		bitDepth = 24;
 	
+	in += 3 * channels * skip;
 	
-	BitBuffer reader;
-	BitBufferInit(&reader, (uint8_t *)in, (bitDepth * channels * samples) >> 3);
 
-	for(int i = (-skip); i < samples; i++)
+	for(int i = 0; i < samples; i++)
 	{
 		for(int c=0; c < channels; c++)
 		{
-			uint32_t val = 0;
+			int32_t val = 0;
 			
-			// This is making some assumptions about endianness, beware!
-			if(bitDepth > 24)
-				val |= BitBufferRead(&reader, MIN(bitDepth - 24, 8)) << (8 - MIN(bitDepth - 24, 8));
-				
-			if(bitDepth > 16)
-				val |= BitBufferRead(&reader, MIN(bitDepth - 16, 8)) << (16 - MIN(bitDepth - 16, 8));
-				
-			assert(bitDepth >= 16);
+			uint8_t *buf = (uint8_t *)&val;
 			
-			val |= BitBufferRead(&reader, 8) << 16;
+			// This is endian-dependant
+			buf[1] = *in++;
+			buf[2] = *in++;
+			buf[3] = *in++;
 			
-			val |= BitBufferRead(&reader, 8) << 24;
 			
-			int32_t *sval = (int32_t *)&val;
+			// fill lower bits with high bits
+			// conversion to unsigned may not be necessary, but...
+			uint32_t *uval = (uint32_t *)&val;
 			
-			if(bitDepth < 32 && *sval > 0)
-				*sval |= *sval >> (32 - bitDepth);
+			*uval |= (*uval & 0x7fffffff) >> rightshift;
 			
-			if(i >= 0)
-				out[swizzle[c]][i + pos] = (double)*sval / divisor;
+			
+			out[swizzle[c]][i + pos] = (double)val / divisor;
 		}
 	}
 }
@@ -823,6 +826,16 @@ SDKImportAudio7(
 		
 		if(ap4_result == AP4_SUCCESS)
 		{
+			// for surround channels
+			// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
+			// ALAC uses Center, Left, Right, Left Rear, Right Rear, LFE
+			// http://alac.macosforge.org/trac/browser/trunk/ReadMe.txt
+			static const int surround_swizzle[] = {4, 0, 1, 2, 3, 5};
+			static const int stereo_swizzle[] = {0, 1, 2, 3, 4, 5}; // no swizzle, actually
+
+			const int *swizzle = localRecP->numChannels > 2 ? surround_swizzle : stereo_swizzle;
+			
+			
 			csSDK_uint32 samples_needed = audioRec7->size;
 			PrAudioSample pos = 0;
 		
@@ -875,9 +888,24 @@ SDKImportAudio7(
 								eos = true;
 							}
 						
-							CopySamples(alac_buffer, audioRec7->buffer,
-													localRecP->numChannels, samples_to_read, pos, skip_samples,
-													localRecP->alac->mConfig.bitDepth);
+							if(localRecP->alac->mConfig.bitDepth == 16)
+							{
+								CopySamples<int16_t>((const int16_t *)alac_buffer, audioRec7->buffer,
+														localRecP->numChannels, swizzle, samples_to_read, pos, skip_samples);
+							}
+							else if(localRecP->alac->mConfig.bitDepth == 32)
+							{
+								CopySamples<int32_t>((const int32_t *)alac_buffer, audioRec7->buffer,
+														localRecP->numChannels, swizzle, samples_to_read, pos, skip_samples);
+							}
+							else
+							{
+								assert(localRecP->alac->mConfig.bitDepth == 20 || localRecP->alac->mConfig.bitDepth == 24);
+								
+								CopySamples24(alac_buffer, audioRec7->buffer,
+												localRecP->numChannels, swizzle, samples_to_read, pos, skip_samples,
+												localRecP->alac->mConfig.bitDepth);
+							}
 							
 							if(eos)
 							{

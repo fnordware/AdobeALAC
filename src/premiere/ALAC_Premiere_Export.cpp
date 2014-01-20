@@ -42,11 +42,9 @@
 
 
 #include "Ap4.h"
-
-#include "ALACBitUtilities.h"
-#include "ALACEncoder.h"
-
 #include "ALAC_Atom.h"
+
+#include "ALACEncoder.h"
 
 
 #ifdef PRMAC_ENV
@@ -447,51 +445,61 @@ AudioClip(double in, unsigned int max_val)
 }
 
 
-
-static void CopySamples(BitBuffer *writer, float * const *in, int channels, int samples, PrAudioSample pos, int bitDepth)
+template<typename OUTPUT>
+static void
+CopySamples(OUTPUT *out, float * const *in, int channels, const int swizzle[], int samples, PrAudioSample pos)
 {
-	// copy Premiere audio to ALAC buffer, swizzling channels
-	// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
-	// ALAC uses Center, Left, Right, Left Rear, Right Rear, LFE
-	// http://alac.macosforge.org/trac/browser/trunk/ReadMe.txt
-	static const int stereo_swizzle[] = {0, 1, 0, 1, 0, 1};
-	static const int surround_swizzle[] = {4, 0, 1, 2, 3, 5};
+	const double multiplier = (1L << ((sizeof(OUTPUT) << 3) - 1));
 	
-	const int *swizzle = (channels > 2 ? surround_swizzle : stereo_swizzle);
-	
-	const double multiplier = (1L << (32 - 1));
-	
-	// Apparently with ALAC, 20-bit audio is packed into 3 bytes (24-bits)
-	// So we take and give the full 24-bits, assuming it's truncating internally
-	if(bitDepth == 20)
-		bitDepth = 24;
-	
-	for(int i=0; i < samples; i++)
+	for(int c=0; c < channels; c++)
 	{
-		for(int c=0; c < channels; c++)
+		for(int i=0; i < samples; i++)
 		{
-			int32_t sval = AudioClip((double)in[swizzle[c]][i] * multiplier, multiplier);
-			
-			uint32_t *val = (uint32_t *)&sval;
-			
-			// This is making some assumptions about endianness, beware!
-			if(bitDepth > 24)
-				BitBufferWrite(writer, (*val >> (8 - MIN(bitDepth - 24, 8))) & 0xff, MIN(bitDepth - 24, 8));
-
-			if(bitDepth > 16)
-				BitBufferWrite(writer, (*val >> (16 - MIN(bitDepth - 16, 8))) & 0xff, MIN(bitDepth - 16, 8));
-
-			assert(bitDepth >= 16);
-			
-			BitBufferWrite(writer, (*val >> 16) & 0xff, 8);
-			
-			BitBufferWrite(writer, (*val >> 24) & 0xff, 8);
+			out[(channels * (pos + i)) + c] = AudioClip(in[swizzle[c]][i] * multiplier, multiplier);
 		}
 	}
 }
 
 
-// Obviously, this is the value that should go in outputDesc.mFormatFlags
+static void
+CopySamples24(uint8_t *out, float * const *in, int channels, const int swizzle[], int samples, PrAudioSample pos, int bitDepth)
+{
+	// Apparently with ALAC, 20-bit and 24-bit audio is packed into 3 bytes.
+	// We will make an int32_t and then copy over the top three bytes
+	const int bits_to_clear = 32 - bitDepth;
+	const uint32_t bitmask = ~((uint32_t)((1L << bits_to_clear) - 1));
+	
+	const double multiplier = (1L << (32 - 1));
+	
+	
+	out += 3 * channels * pos;
+	
+	
+	for(int i=0; i < samples; i++)
+	{
+		for(int c=0; c < channels; c++)
+		{
+			int32_t val = AudioClip(in[swizzle[c]][i] * multiplier, multiplier);
+			
+			// zero out lower bits (might not be necessary)
+			// converting to unsigned (also might not be necessary)
+			uint32_t *uval = (uint32_t *)&val;
+			
+			*uval &= bitmask;
+			
+			
+			uint8_t *buf = (uint8_t *)&val;
+			
+			// endian-dependant
+			*out++ = buf[1];
+			*out++ = buf[2];
+			*out++ = buf[3];
+		}
+	}
+}
+
+
+// Obviously, this is the value that should go in outputDesc.mFormatFlags.~
 // Adapted from CoreAudioTypes.h
 enum
 {
@@ -625,7 +633,7 @@ exSDKExport(
 																				details);
 																				
 				// * A weird bug here in Bento4, it appears.  Only the high bits for sample rate are written,
-				// so I have to send the bottom two bits up two spots.  This then means that no sample
+				// so I have to send the bottom two bytes up two spots.  This then means that no sample
 				// rate over 65535 can be recorded.  AP4_MpegAudioSampleDescription::ToAtom() seems to be using
 				// this work-around as well, but feels more like a bug.
 				
@@ -658,9 +666,6 @@ exSDKExport(
 				
 				while(samples_left > 0 && result == malNoError)
 				{
-					BitBuffer bit_writer;
-					BitBufferInit(&bit_writer, (uint8_t *)alac_buffer, alac_buf_size);
-					
 					int samples_this_frame = frameSize;
 					
 					if(samples_this_frame > samples_left)
@@ -681,9 +686,34 @@ exSDKExport(
 						
 						if(result == malNoError)
 						{
-							CopySamples(&bit_writer, pr_buffers,
-											audioChannels, samples_to_get, pos_this_frame,
-											sampleSizeP.value.intValue);
+							// copy Premiere audio to ALAC buffer, swizzling channels
+							// Premiere uses Left, Right, Left Rear, Right Rear, Center, LFE
+							// ALAC uses Center, Left, Right, Left Rear, Right Rear, LFE
+							// http://alac.macosforge.org/trac/browser/trunk/ReadMe.txt
+							static const int stereo_swizzle[] = {0, 1, 0, 1, 0, 1};
+							static const int surround_swizzle[] = {4, 0, 1, 2, 3, 5};
+							
+							const int *swizzle = (audioChannels > 2 ? surround_swizzle : stereo_swizzle);
+							
+							
+							if(sampleSizeP.value.intValue == 16)
+							{
+								CopySamples<int16_t>((int16_t *)alac_buffer, pr_buffers, audioChannels, swizzle,
+														samples_to_get, pos_this_frame);
+							}
+							else if(sampleSizeP.value.intValue == 32)
+							{
+								CopySamples<int32_t>((int32_t *)alac_buffer, pr_buffers, audioChannels, swizzle,
+														samples_to_get, pos_this_frame);
+							}
+							else
+							{
+								assert(sampleSizeP.value.intValue == 20 || sampleSizeP.value.intValue == 24);
+								
+								CopySamples24(alac_buffer, pr_buffers, audioChannels, swizzle,
+												samples_to_get, pos_this_frame,
+												sampleSizeP.value.intValue);
+							}
 						}
 						
 						samples_left_this_frame -= samples_to_get;
