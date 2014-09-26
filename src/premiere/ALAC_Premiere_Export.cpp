@@ -310,7 +310,7 @@ class MyOther_ByteStream : public AP4_ByteStream
 	virtual ~MyOther_ByteStream();
 	
 	virtual AP4_Result ReadPartial(void *buffer, AP4_Size bytes_to_read, AP4_Size &bytes_read);
-    virtual AP4_Result WritePartial(const void *buffer, AP4_Size bytes_to_write, AP4_Size &bytes_written);
+	virtual AP4_Result WritePartial(const void *buffer, AP4_Size bytes_to_write, AP4_Size &bytes_written);
 	virtual AP4_Result Seek(AP4_Position position);
 	virtual AP4_Result Tell(AP4_Position &position);
 	virtual AP4_Result GetSize(AP4_LargeSize &size);
